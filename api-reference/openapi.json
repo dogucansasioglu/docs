@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
+    "title": "GrowEasy API",
+    "description": "The GrowEasy API allows you to programmatically start scrapes, check status, manage credits, and find/verify emails.",
     "license": {
       "name": "MIT"
     },
@@ -10,7 +10,7 @@
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://api.groweasy.io"
     }
   ],
   "security": [
@@ -19,36 +19,35 @@
     }
   ],
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
+    "/start": {
+      "post": {
+        "summary": "Start Scrape",
+        "description": "Start a new scrape job with the provided filters. Returns a scrape ID that can be used to check status.",
+        "operationId": "startScrape",
+        "requestBody": {
+          "description": "Scrape configuration with filters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartScrapeRequest"
+              }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Scrape started successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
+                  "$ref": "#/components/schemas/StartScrapeResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Unexpected error",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -56,35 +55,19 @@
                 }
               }
             }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
           },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
           },
-          "400": {
-            "description": "unexpected error",
+          "402": {
+            "description": "Insufficient credits",
             "content": {
               "application/json": {
                 "schema": {
@@ -96,28 +79,55 @@
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/status": {
+      "get": {
+        "summary": "Get Scrape Status",
+        "description": "Get the current status of a scrape job by its ID.",
+        "operationId": "getScrapeStatus",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
+            "name": "scrapeId",
+            "in": "query",
+            "description": "The ID of the scrape job to check",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
+          "200": {
+            "description": "Scrape status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeStatusResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scrape not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -128,25 +138,232 @@
           }
         }
       }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
+    },
+    "/credits": {
+      "get": {
+        "summary": "Get Credits",
+        "description": "Check the remaining credits for your account.",
+        "operationId": "getCredits",
+        "responses": {
+          "200": {
+            "description": "Credits retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email/find": {
       "post": {
-        "description": "Information about a new plant added to the store",
+        "summary": "Find Business Email",
+        "description": "Find a business email address for a person based on their name and company.",
+        "operationId": "findEmail",
         "requestBody": {
-          "description": "Plant added to the store",
+          "description": "Person and company information",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/FindEmailRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "Email found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Email not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email/verify": {
+      "post": {
+        "summary": "Verify Email",
+        "description": "Verify if an email address is valid and deliverable.",
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "description": "Email to verify",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verification completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email/personal": {
+      "post": {
+        "summary": "Find Personal Email",
+        "description": "Find a personal email address for a person.",
+        "operationId": "findPersonalEmail",
+        "requestBody": {
+          "description": "Person information",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindPersonalEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Personal email found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindPersonalEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Personal email not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -154,55 +371,348 @@
   },
   "components": {
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
+      "StartScrapeRequest": {
         "type": "object",
+        "required": ["filters"],
         "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
+          "filters": {
+            "type": "object",
+            "description": "Search filters for the scrape",
+            "properties": {
+              "jobTitles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of job titles to target",
+                "example": ["CEO", "CTO", "Founder"]
+              },
+              "locations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of locations to target",
+                "example": ["San Francisco, CA", "New York, NY"]
+              },
+              "industries": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of industries to target",
+                "example": ["Technology", "SaaS"]
+              },
+              "companySize": {
+                "type": "string",
+                "description": "Company size range",
+                "example": "11-50"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Maximum number of leads to scrape",
+                "example": 100
+              }
+            }
           },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
+          "webhookUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional webhook URL to receive scrape completion notification"
           }
         }
       },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
+      "StartScrapeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
           },
-          {
-            "required": [
-              "id"
-            ],
+          "data": {
             "type": "object",
             "properties": {
-              "id": {
-                "description": "Identification number of the plant",
+              "scrapeId": {
+                "type": "string",
+                "description": "Unique identifier for the scrape job",
+                "example": "scr_abc123xyz"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "processing", "completed", "failed"],
+                "example": "pending"
+              },
+              "estimatedCredits": {
                 "type": "integer",
-                "format": "int64"
+                "description": "Estimated credits to be used",
+                "example": 100
               }
             }
           }
-        ]
+        }
       },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
+      "ScrapeStatusResponse": {
         "type": "object",
         "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
+          "success": {
+            "type": "boolean",
+            "example": true
           },
-          "message": {
-            "type": "string"
+          "data": {
+            "type": "object",
+            "properties": {
+              "scrapeId": {
+                "type": "string",
+                "example": "scr_abc123xyz"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "processing", "completed", "failed"],
+                "example": "completed"
+              },
+              "progress": {
+                "type": "integer",
+                "description": "Progress percentage (0-100)",
+                "example": 100
+              },
+              "leadsFound": {
+                "type": "integer",
+                "description": "Number of leads found so far",
+                "example": 87
+              },
+              "creditsUsed": {
+                "type": "integer",
+                "description": "Credits used for this scrape",
+                "example": 87
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-01-15T10:30:00Z"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-01-15T10:35:00Z"
+              }
+            }
+          }
+        }
+      },
+      "CreditsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "credits": {
+                "type": "integer",
+                "description": "Remaining credits",
+                "example": 5000
+              },
+              "plan": {
+                "type": "string",
+                "description": "Current subscription plan",
+                "example": "pro"
+              },
+              "resetDate": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When credits will reset",
+                "example": "2024-02-01T00:00:00Z"
+              }
+            }
+          }
+        }
+      },
+      "FindEmailRequest": {
+        "type": "object",
+        "required": ["firstName", "lastName", "company"],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "First name of the person",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the person",
+            "example": "Smith"
+          },
+          "company": {
+            "type": "string",
+            "description": "Company name or domain",
+            "example": "acme.com"
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional LinkedIn profile URL for better accuracy"
+          }
+        }
+      },
+      "FindEmailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "The found business email",
+                "example": "john.smith@acme.com"
+              },
+              "confidence": {
+                "type": "number",
+                "description": "Confidence score (0-1)",
+                "example": 0.95
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Sources where the email was found",
+                "example": ["linkedin", "company_website"]
+              }
+            }
+          }
+        }
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address to verify",
+            "example": "john.smith@acme.com"
+          }
+        }
+      },
+      "VerifyEmailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.smith@acme.com"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["valid", "invalid", "catch_all", "unknown"],
+                "description": "Verification status",
+                "example": "valid"
+              },
+              "deliverable": {
+                "type": "boolean",
+                "description": "Whether the email is deliverable",
+                "example": true
+              },
+              "disposable": {
+                "type": "boolean",
+                "description": "Whether the email is from a disposable domain",
+                "example": false
+              },
+              "freeProvider": {
+                "type": "boolean",
+                "description": "Whether the email is from a free email provider",
+                "example": false
+              }
+            }
+          }
+        }
+      },
+      "FindPersonalEmailRequest": {
+        "type": "object",
+        "required": ["firstName", "lastName"],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "First name of the person",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the person",
+            "example": "Smith"
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "LinkedIn profile URL for better accuracy"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location for disambiguation",
+            "example": "San Francisco, CA"
+          }
+        }
+      },
+      "FindPersonalEmailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "The found personal email",
+                "example": "johnsmith@gmail.com"
+              },
+              "confidence": {
+                "type": "number",
+                "description": "Confidence score (0-1)",
+                "example": 0.85
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["success", "error"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code",
+                "example": "INVALID_REQUEST"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message",
+                "example": "The request body is missing required fields"
+              }
+            }
           }
         }
       }
@@ -210,7 +720,8 @@
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "scheme": "bearer"
+        "scheme": "bearer",
+        "description": "API key authentication. Get your API key from the GrowEasy dashboard."
       }
     }
   }

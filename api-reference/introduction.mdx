@@ -1,33 +1,105 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Introduction'
+description: 'Integrate GrowEasy into your applications'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Welcome to the GrowEasy API
 
-## Welcome
+The GrowEasy API allows you to programmatically start scrapes, check status, manage credits, and find/verify emails. Build custom integrations and automate your lead generation workflows.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+<CardGroup cols={2}>
+  <Card
+    title="Start Scrape"
+    icon="rocket"
+    href="/api-reference/endpoint/start"
+  >
+    Start a new scrape with filters
+  </Card>
+  <Card
+    title="Check Status"
+    icon="clock"
+    href="/api-reference/endpoint/status"
+  >
+    Get the status of a scrape job
+  </Card>
+  <Card
+    title="Find Email"
+    icon="envelope"
+    href="/api-reference/endpoint/email-find"
+  >
+    Find business emails for leads
+  </Card>
+  <Card
+    title="Verify Email"
+    icon="check"
+    href="/api-reference/endpoint/email-verify"
+  >
+    Verify email deliverability
+  </Card>
+</CardGroup>
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API endpoints require authentication using Bearer tokens. Include your API key in the Authorization header:
+
+```bash
+curl -X GET "https://api.groweasy.io/credits" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Get your API key from the [GrowEasy dashboard](https://app.groweasy.io/settings/api).
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://api.groweasy.io
+```
+
+## Rate Limits
+
+- **Starter plan**: 60 requests per minute
+- **Pro plan**: 300 requests per minute
+- **Enterprise**: Custom limits
+
+## Response Format
+
+All responses are returned in JSON format:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
+{
+  "success": true,
+  "data": {
+    // Response data
   }
-]
+}
 ```
+
+## Error Handling
+
+Errors follow a consistent format:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "Description of the error"
+  }
+}
+```
+
+### Common Error Codes
+
+| Code | Description |
+|------|-------------|
+| `INVALID_REQUEST` | The request body is malformed or missing required fields |
+| `UNAUTHORIZED` | Invalid or missing API key |
+| `INSUFFICIENT_CREDITS` | Not enough credits to complete the operation |
+| `NOT_FOUND` | The requested resource was not found |
+| `RATE_LIMIT_EXCEEDED` | Too many requests, slow down |
+
+## Need Help?
+
+Contact our developer support at [api-support@groweasy.io](mailto:api-support@groweasy.io).

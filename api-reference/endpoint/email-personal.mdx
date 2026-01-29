@@ -1,0 +1,98 @@
+---
+title: 'Find Personal Email'
+openapi: 'POST /email/personal'
+---
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.groweasy.io/email/personal" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Smith",
+    "linkedinUrl": "https://linkedin.com/in/johnsmith"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.groweasy.io/email/personal', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    firstName: 'John',
+    lastName: 'Smith',
+    linkedinUrl: 'https://linkedin.com/in/johnsmith',
+  }),
+});
+
+const data = await response.json();
+console.log(data.data.email); // "johnsmith@gmail.com"
+console.log(data.data.confidence); // 0.85
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.groweasy.io/email/personal",
+    headers={
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Content-Type": "application/json",
+    },
+    json={
+        "firstName": "John",
+        "lastName": "Smith",
+        "linkedinUrl": "https://linkedin.com/in/johnsmith",
+    },
+)
+
+data = response.json()
+print(data["data"]["email"])  # "johnsmith@gmail.com"
+print(data["data"]["confidence"])  # 0.85
+```
+
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "email": "johnsmith@gmail.com",
+    "confidence": 0.85
+  }
+}
+```
+
+## With Location
+
+Add location for better disambiguation when searching for common names:
+
+```bash
+curl -X POST "https://api.groweasy.io/email/personal" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Smith",
+    "linkedinUrl": "https://linkedin.com/in/johnsmith",
+    "location": "San Francisco, CA"
+  }'
+```
+
+## Use Cases
+
+Personal email lookup is useful when:
+
+- Business email bounced or is unavailable
+- Reaching out for non-business purposes
+- The person is a founder/freelancer without a company domain
+- Following up after someone leaves a company
